@@ -1,5 +1,1 @@
-// Get all Accounts
-
-// Get all Products
-
-// 
+package main

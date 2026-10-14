@@ -72,6 +72,9 @@ func (r *postgresRepository) ListAccounts(ctx context.Context, skip, take uint64
 		}
 		accounts = append(accounts, account)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return accounts, nil
 }

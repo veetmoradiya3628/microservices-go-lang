@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net"
 
+	pb "github.com/veetmoradiya3628/microservices-go-lang/account/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 type grpcServer struct {
+	pb.UnimplementedAccountServiceServer
 	service Service
 }
 
@@ -19,7 +21,7 @@ func ListenGRPC(s Service, port int) error {
 		return err
 	}
 	serv := grpc.NewServer()
-	// pb.
+	pb.RegisterAccountServiceServer(serv, &grpcServer{service: s})
 	reflection.Register(serv)
 	return serv.Serve(lis)
 }
@@ -41,7 +43,7 @@ func (s *grpcServer) GetAccount(ctx context.Context, req *pb.GetAccountRequest) 
 }
 
 func (s *grpcServer) GetAccounts(ctx context.Context, req *pb.GetAccountsRequest) (*pb.GetAccountsResponse, error) {
-	accounts, err := s.service.GetAccounts(ctx, 0, 0)
+	accounts, err := s.service.GetAccounts(ctx, req.Skip, req.Take)
 	if err != nil {
 		return nil, err
 	}

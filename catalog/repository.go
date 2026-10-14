@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 
 	elastic "github.com/olivere/elastic/v7"
 )
@@ -82,10 +83,95 @@ func (r *elasticRepository) GetProductByID(ctx context.Context, id string) (*Pro
 }
 
 func (r *elasticRepository) ListProducts(ctx context.Context, skip, take uint64) ([]Product, error) {
+	resp, err := r.client.Search().
+		Index("catalog").
+		Type("product").
+		Query(elastic.NewMatchAllQuery()).
+		From(int(skip)).
+		Size(int(take)).
+		Do(ctx)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	products := []Product{}
+	for _, hit := range resp.Hits.Hits {
+		p := productDocument{}
+		if err != json.Unmarshal(*hit.Source, &p); err != nil {
+			return nil, err
+		}
+		products = append(products, Product{
+			ID:          hit.Id,
+			Name:        p.Name,
+			Description: p.Description,
+			Price:       p.Price,
+		})
+	}
+	return products, nil
 }
 
 func (r *elasticRepository) ListProductsWithIDs(ctx context.Context, ids []string) ([]Product, error) {
+	items := []*elastic.MultiGetItem{}
+	for _, id := range ids {
+		items = append(
+			items,
+			elastic.NewMultiGetItem().
+				Index("catalog").
+				Type("product").
+				Id(id),
+		)
+	}
+
+	res, err := r.client.MultiGet().
+		Add(items...).
+		Do(ctx)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	products := []Product{}
+	for _, doc := range res.Docs {
+		p := productDocument{}
+		if err = json.Unmarshal(*doc.Source, &p); err == nil {
+			products = append(products, Product{
+				ID:          doc.Id,
+				Name:        p.Name,
+				Description: p.Description,
+				Price:       p.Price,
+			})
+		}
+	}
+	return products, nil
 }
 
 func (r *elasticRepository) SearchProducts(ctx context.Context, query string, skip, take uint64) ([]Product, error) {
+	resp, err := r.client.Search().
+		Index("catalog").
+		Type("product").
+		Query(elastic.NewMultiMatchQuery(query, "name", "description")).
+		From(int(skip)).
+		Size(int(take)).
+		Do(ctx)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	products := []Product{}
+	for _, hit := range resp.Hits.Hits {
+		p := productDocument{}
+		if err = json.Unmarshal(*hit.Source, &p); err == nil {
+			products = append(products, Product{
+				ID:          hit.Id,
+				Name:        p.Name,
+				Description: p.Description,
+				Price:       p.Price,
+			})
+		}
+	}
+	return products, nil
 }

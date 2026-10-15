@@ -6,22 +6,23 @@ import (
 	"log"
 	"net"
 
+	"github.com/veetmoradiya3628/microservices-go-lang/catalog/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 type grpcServer struct {
-	pb.UnimplementedAccountServiceServer
+	pb.UnimplementedCatalogServiceServer
 	service Service
 }
 
 func ListenGRPC(s Service, port int) error {
-	lis, err := net.Listen("tcp", fmt.Sprintf("%d", port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return err
 	}
 	serv := grpc.NewServer()
-	pb.RegisterAccountServiceServer(serv, &grpcServer{service: s})
+	pb.RegisterCatalogServiceServer(serv, &grpcServer{service: s})
 	reflection.Register(serv)
 	return serv.Serve(lis)
 }
@@ -34,26 +35,26 @@ func (s *grpcServer) PostProduct(ctx context.Context, r *pb.PostProductRequest) 
 	}
 	return &pb.PostProductResponse{
 		Product: &pb.Product{
-			Id: p.ID,
-			Name: p.Name,
+			Id:          p.ID,
+			Name:        p.Name,
 			Description: p.Description,
-			Price: p.Price,
-		}
+			Price:       p.Price,
+		},
 	}, nil
 }
 
 func (s *grpcServer) GetProduct(ctx context.Context, r *pb.GetProductRequest) (*pb.GetProductResponse, error) {
-	p, err := s.service.getProduct(ctx, r.Id)
+	p, err := s.service.GetProduct(ctx, r.Id)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 	return &pb.GetProductResponse{
 		Product: &pb.Product{
-			Id: p.ID,
-			Name: p.Name,
+			Id:          p.ID,
+			Name:        p.Name,
 			Description: p.Description,
-			Price: p.Price
+			Price:       p.Price,
 		},
 	}, nil
 }
@@ -61,7 +62,7 @@ func (s *grpcServer) GetProduct(ctx context.Context, r *pb.GetProductRequest) (*
 func (s *grpcServer) GetProducts(ctx context.Context, r *pb.GetProductsRequest) (*pb.GetProductsResponse, error) {
 	var res []Product
 	var err error
-	if r.Query != ""{
+	if r.Query != "" {
 		res, err = s.service.SearchProducts(ctx, r.Query, r.Skip, r.Take)
 	} else if len(r.Ids) != 0 {
 		res, err = s.service.GetProductsByIDs(ctx, r.Ids)
@@ -77,10 +78,10 @@ func (s *grpcServer) GetProducts(ctx context.Context, r *pb.GetProductsRequest) 
 		products = append(
 			products,
 			&pb.Product{
-				Id: p.ID,
-				Name: p.Name,
+				Id:          p.ID,
+				Name:        p.Name,
 				Description: p.Description,
-				Price: p.Price,
+				Price:       p.Price,
 			},
 		)
 	}

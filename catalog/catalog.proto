@@ -1,6 +1,8 @@
 syntax = "proto3";
 package pb;
 
+option go_package = "./";
+
 message Product {
   string id = 1;
   string name = 2;
@@ -11,7 +13,7 @@ message Product {
 message PostProductRequest {
   string name = 1;
   string description = 2;
-  string price = 3;
+  double price = 3;
 }
 message PostProductResponse {
   Product product = 1;

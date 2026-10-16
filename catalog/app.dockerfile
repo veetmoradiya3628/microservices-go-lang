@@ -1,13 +1,12 @@
-FROM golang:1.20-alpine AS build
-RUN apk --no-cache add gcc g++ ca-certificates
-WORKDIR /go/src/github.com/veetmoradiya3628/microservices-go-lang
+FROM golang:1.26.5-alpine AS build
+WORKDIR /src
 COPY go.mod go.sum ./
-COPY vendor vendor
-COPY catalog catalog
-RUN GO111MODULE=on go build -mod vendor -o /go/bin/app ./catalog/cmd/catalog
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog ./catalog/cmd/catalog
 
-FROM alpine:3.18
-WORKDIR /usr/bin
-COPY --from=build /go/bin .
+FROM alpine:3.22
+RUN apk --no-cache add ca-certificates
+COPY --from=build /out/catalog /usr/local/bin/catalog
 EXPOSE 8080
-CMD ["./app"]
+ENTRYPOINT ["catalog"]

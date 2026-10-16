@@ -1,7 +1,9 @@
 package order
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/veetmoradiya3628/microservices-go-lang/account"
@@ -44,4 +46,14 @@ func ListenGRPC(s Service, accountURL, catalogURL string, port int) error {
 	})
 	reflection.Register(serv)
 	return serv.Serve(lis)
+}
+
+func (s *grpcServer) PostOrder(ctx context.Context, r *pb.PostOrderRequest) (*pb.PostOrderResponse, error) {
+	_, err := s.accountClient.GetAccount(ctx, r.AccountId)
+	if err != nil {
+		log.Println("Error getting account: ", err)
+		return nil, errors.New("account not found")
+	}
+
+	 
 }

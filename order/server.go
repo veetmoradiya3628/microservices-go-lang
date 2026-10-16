@@ -7,8 +7,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/veetmoradiya3628/microservices-go-lang/account"
-	"github.com/veetmoradiya3628/microservices-go-lang/catalog"
+	account "github.com/veetmoradiya3628/microservices-go-lang/account"
+	catalog "github.com/veetmoradiya3628/microservices-go-lang/catalog"
 	"github.com/veetmoradiya3628/microservices-go-lang/order/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
